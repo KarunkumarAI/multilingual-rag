@@ -1,70 +1,281 @@
-# Self-Healing RAG — Phase 11: Multilingual
+# Self-Healing Multilingual RAG & AI Assistant
 
-Phase 11 adds first-class English, Kannada, Hindi and Telugu support to both General AI Chat and Knowledge RAG.
+**An end-to-end AI application for multilingual, document-grounded question answering with hybrid retrieval, self-healing workflows, voice interaction, and browser automation.**
 
-## Added
-- Auto language detection for English (`en`), Kannada (`kn`), Hindi (`hi`) and Telugu (`te`).
-- Manual language selection remains available.
-- Multilingual dense retrieval with `intfloat/multilingual-e5-small`.
-- Hybrid retrieval remains enabled: multilingual dense vectors + BM25 sparse retrieval + Qdrant RRF fusion.
-- RAG answers are instructed to respond in the selected/detected language while remaining grounded in retrieved evidence.
-- General chatbot responses use the selected/detected language.
-- Existing user isolation, citations, bounded self-healing and abstention are preserved.
+**Tech Stack:** Python · FastAPI · Streamlit · PostgreSQL · Qdrant · FastEmbed · BM25 · Reciprocal Rank Fusion (RRF) · OpenAI API · Gemini API · Tesseract OCR · Playwright · Pytest
 
-## Important migration
-The Qdrant collection is now `knowledge_chunks_multilingual_hybrid_v2`. Re-upload/reprocess knowledge documents once so they are embedded with the multilingual model.
+## Project Overview
 
-## Run (Windows CMD)
+Traditional Retrieval-Augmented Generation (RAG) applications can produce incomplete or unsupported answers when document retrieval fails, queries are ambiguous, or retrieved evidence is insufficient.
+
+This project explores a **self-healing RAG architecture** that detects retrieval and evidence problems, attempts bounded query repair and retrieval retries, and abstains when sufficient supporting information is unavailable.
+
+The application combines document-based question answering with a general AI chatbot, multilingual interactions, conversation persistence, voice features, OCR, and browser automation.
+
+## Key Features
+
+- **Multilingual AI:** English, Kannada, Hindi, and Telugu support with automatic language detection and manual selection.
+- **Hybrid Retrieval:** Combines dense semantic retrieval and BM25 sparse retrieval using Qdrant and Reciprocal Rank Fusion.
+- **Self-Healing RAG:** Retrieval failure detection, query repair, bounded retries, evidence checks, and safe abstention.
+- **Source-Aware Answers:** Document-grounded responses with supporting citations.
+- **Document Ingestion:** PDF, CSV, Excel, DOCX, TXT, Markdown, HTML, and supported web URLs.
+- **OCR Support:** Tesseract-based extraction for scanned or text-sparse PDFs.
+- **Voice Interaction:** Browser microphone input, speech-to-text, and text-to-speech support for four languages.
+- **Authentication and Memory:** Email-based authentication and PostgreSQL conversation persistence.
+- **LLM Integration:** Configurable language model providers including OpenAI and Gemini.
+- **Browser Automation:** Playwright-powered Google search, URL opening, and YouTube search/playback with URL safety checks.
+- **Testing and Security:** Automated tests, offline evaluation utilities, security headers, request-size protection, and browser URL validation.
+
+## System Architecture
+
+```mermaid
+flowchart TD
+    A[User - Streamlit Interface] --> B[FastAPI Backend]
+    B --> C{Request Type}
+
+    C --> D[Document Ingestion]
+    C --> E[Knowledge RAG]
+    C --> F[General AI Chat]
+    C --> G[Voice and Browser Tools]
+
+    D --> H[Text Extraction and OCR]
+    H --> I[Chunking and Embeddings]
+    I --> J[(Qdrant Vector Store)]
+
+    E --> K[Multilingual Query Processing]
+    K --> L[Dense and BM25 Retrieval]
+    J --> L
+    L --> M[RRF Fusion]
+    M --> N[Evidence Validation]
+
+    N --> O{Evidence Sufficient?}
+    O -->|No| P[Bounded Query Repair and Retry]
+    P --> L
+    O -->|Yes| Q[LLM Answer Generation]
+    P -->|Retry Limit Reached| R[Safe Abstention]
+
+    Q --> S[Grounded Answer with Citations]
+    F --> T[Configured LLM Provider]
+
+    B --> U[(PostgreSQL - Users and Conversations)]
+```
+
+## How Self-Healing Retrieval Works
+
+1. The user submits a document-related question.
+2. The system processes the query and retrieves relevant document chunks.
+3. Dense and sparse retrieval results are combined using RRF.
+4. Retrieved evidence is evaluated for relevance and sufficiency.
+5. If the evidence is inadequate, the system attempts query repair and bounded retrieval retries.
+6. If sufficient evidence is found, the LLM generates a source-grounded answer.
+7. If evidence remains insufficient, the system abstains instead of presenting unsupported information as fact.
+
+The system is designed to reduce unsupported answers; it does not guarantee that hallucinations are impossible.
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Programming language | Python |
+| Backend API | FastAPI, Uvicorn |
+| Frontend | Streamlit |
+| Relational database | PostgreSQL |
+| Vector database | Qdrant |
+| Embeddings | Multilingual embedding model / FastEmbed |
+| Sparse retrieval | BM25 |
+| Retrieval fusion | Reciprocal Rank Fusion |
+| LLM integration | OpenAI API, Gemini API |
+| OCR | Tesseract |
+| Browser automation | Playwright |
+| Testing | Pytest |
+| Evaluation | Custom offline RAG evaluation harness |
+
+## Project Structure
+
+```text
+Multi_RAG/
+├── backend/
+│   └── app/
+│       ├── auth/
+│       ├── browser/
+│       ├── conversations/
+│       ├── core/
+│       ├── db/
+│       ├── documents/
+│       ├── llm/
+│       ├── rag/
+│       ├── security/
+│       ├── voice/
+│       └── main.py
+├── frontend/
+│   ├── app.py
+│   └── api_client.py
+├── evaluation/
+│   └── rag_eval.py
+├── tests/
+├── requirements.txt
+├── .env.example
+├── DEPLOYMENT.md
+├── start_backend.bat
+└── start_frontend.bat
+```
+
+## Local Installation
+
+### Prerequisites
+
+- Python and pip
+- PostgreSQL
+- Git
+- Tesseract OCR for scanned documents
+- Google Chrome for supported browser automation
+- At least one configured LLM provider
+
+### 1. Clone the repository
+
+```bat
+git clone https://github.com/KarunkumarAI/multilingual-rag.git
+cd multilingual-rag
+```
+
+### 2. Create a virtual environment
+
 ```bat
 py -3.11 -m venv venv
 venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-python -m backend.app.db.init_db
-uvicorn backend.app.main:app --reload
 ```
 
-Second CMD:
+### 3. Install dependencies
+
 ```bat
-venv\Scripts\activate
-streamlit run frontend/app.py
+pip install -r requirements.txt
 ```
 
-## Test
-Upload a document and ask related questions in English, Kannada, Hindi and Telugu. Choose `Auto` to test automatic language detection. Also ask an unsupported question and verify that RAG abstains instead of inventing evidence.
+### 4. Configure environment variables
 
-## Phase 12 — Voice + OCR
-- Browser microphone capture with Streamlit `audio_input`.
-- Backend speech-to-text for English, Kannada, Hindi and Telugu.
-- Text-to-speech endpoint for the same four languages.
-- PDF OCR fallback: normal PDF extraction runs first; OCR is used only when extracted text is too sparse.
-- OCR never invents missing text; empty OCR fails safely.
+```bat
+copy .env.example .env
+```
 
-### Windows OCR prerequisite
-Install Tesseract OCR and the `eng`, `kan`, `hin`, and `tel` language data. Ensure `tesseract.exe` is on PATH, then verify with `tesseract --version` and `tesseract --list-langs`.
+Edit `.env` and supply your PostgreSQL connection URL, JWT secret, and the API keys required by your selected LLM provider.
 
-## Phase 13 — Safe Browser + YouTube Control
+The backend configuration uses `RAG_DATABASE_URL` and `RAG_JWT_SECRET`.
 
-Adds authenticated browser tools backed by Playwright: public URL opening, Google web search, YouTube search + first-result playback, and pause/resume. Browser automation uses an isolated Chrome profile under `data/browser_profile`; it does not reuse the user's normal Chrome profile, cookies, or login state. URL opening blocks localhost/private/link-local/reserved destinations.
+Never commit `.env`, production credentials, or personal document data.
 
-### Windows setup
-After `pip install -r requirements.txt`, ensure Google Chrome is installed. This phase launches the installed Chrome channel through Playwright. If Chrome is unavailable, install it before using Browser & YouTube.
+### 5. Initialize PostgreSQL
 
-### Test
-Start FastAPI and Streamlit as usual. Open **Browser & YouTube** in the sidebar and try `Shape of You Ed Sheeran`, then Pause/Resume.
+Create the database and database user required by your configuration, then run:
 
-## Phase 13 natural-language action routing patch
-The AI Chatbot now intercepts explicit browser/media commands before they reach the LLM. Supported examples include `Play Shape of You`, `Pause the video`, `Resume the video`, `Search Google for Python tutorials`, `Open YouTube`, and explicit public HTTP/HTTPS URLs. Other prompts continue to the normal LLM chatbot. The existing isolated Playwright browser and URL safety checks remain in force.
+```bat
+python -m backend.app.db.init_db
+```
 
-## Phase 14 — Testing, RAG Evaluation & Security Hardening
+### 6. Start the backend
 
-Adds repeatable pytest checks, an offline evidence-gate evaluation harness, HTTP security headers, request-size protection, and regression tests for SSRF/browser URL blocking, self-healing evidence checks, and multilingual language handling.
+```bat
+python -m uvicorn backend.app.main:app --reload --port 8000
+```
 
-Run after installing requirements:
+Backend API documentation:
+
+http://localhost:8000/docs
+
+### 7. Start the frontend
+
+Open another CMD window, activate the virtual environment, and run:
+
+```bat
+python -m streamlit run frontend/app.py
+```
+
+Frontend:
+
+http://localhost:8501
+
+## Multilingual Retrieval
+
+The application supports:
+
+| Language | Code |
+|---|---|
+| English | `en` |
+| Kannada | `kn` |
+| Hindi | `hi` |
+| Telugu | `te` |
+
+Automatic language detection and manual language selection are supported.
+
+When changing the embedding model or Qdrant collection schema, previously ingested documents may need to be reprocessed to ensure compatible vector dimensions and representations.
+
+## Voice and OCR
+
+Voice capabilities include browser microphone capture, speech-to-text, and text-to-speech endpoints.
+
+For OCR on Windows, install Tesseract with the `eng`, `kan`, `hin`, and `tel` language data.
+
+Verify installation:
+
+```bat
+tesseract --version
+tesseract --list-langs
+```
+
+Normal PDF text extraction is attempted before OCR fallback.
+
+## Browser and YouTube Automation
+
+The application includes authenticated browser actions powered by Playwright.
+
+Supported actions include opening permitted public URLs, Google searches, YouTube searches, first-result playback, and pause/resume controls.
+
+Browser automation uses an isolated Chrome profile under `data/browser_profile`. URL validation blocks localhost, private, link-local, and reserved destinations.
+
+## Testing and Evaluation
+
+Run automated tests:
 
 ```bat
 pytest -q
+```
+
+Run the offline evaluation harness:
+
+```bat
 python -m evaluation.rag_eval
 ```
 
-The evaluation harness intentionally runs without an LLM key. Production RAG answers still require a configured LLM provider. Browser tests do not launch Chrome.
+The evaluation harness can run without an LLM API key. Generating production RAG answers requires a configured LLM provider.
+
+Tests cover areas including multilingual language handling, retrieval evidence checks, and browser URL security.
+
+### Suggested Manual Validation
+
+- Upload a document and ask grounded questions.
+- Repeat questions in all four supported languages.
+- Ask questions not supported by the document and check abstention behavior.
+- Verify that answers include appropriate citations.
+- Test authentication and conversation persistence.
+- Test OCR with scanned documents.
+- Test voice input/output and browser automation.
+
+## Deployment Status
+
+The project currently supports **local execution using FastAPI, Streamlit, and PostgreSQL**.
+
+Cloud hosting, production monitoring, and externally accessible deployment remain future improvements. See `DEPLOYMENT.md` for additional deployment notes.
+
+## Future Improvements
+
+- Cloud deployment and production observability
+- Expanded multilingual retrieval evaluation
+- Automated retrieval-quality and citation metrics
+- Performance and latency benchmarking
+- Improved query-repair strategies
+- CI/CD integration
+
+## Repository
+
+GitHub: https://github.com/KarunkumarAI/multilingual-rag
+
+**Project focus:** Retrieval-Augmented Generation, multilingual NLP, evidence-grounded LLM applications, retrieval reliability, and AI backend engineering.
