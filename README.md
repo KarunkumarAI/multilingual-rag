@@ -279,3 +279,14 @@ Cloud hosting, production monitoring, and externally accessible deployment remai
 GitHub: https://github.com/KarunkumarAI/multilingual-rag
 
 **Project focus:** Retrieval-Augmented Generation, multilingual NLP, evidence-grounded LLM applications, retrieval reliability, and AI backend engineering.
+
+## Application Screenshots
+
+### Multilingual Document Question Answering
+![Multilingual RAG](screenshots/multilingual-rag.png)
+
+### Persistent Conversation History
+![Conversation History](screenshots/conversation-history.png)
+
+### Voice-Enabled Knowledge RAG
+![Voice Interface](screenshots/voice-interface.png)
