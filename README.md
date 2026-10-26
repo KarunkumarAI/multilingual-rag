@@ -283,10 +283,10 @@ GitHub: https://github.com/KarunkumarAI/multilingual-rag
 ## Application Screenshots
 
 ### Multilingual Document Question Answering
-![Multilingual RAG](screenshots/multilingual-rag.png)
+![Multilingual RAG](screenshots/Multilingual%20RAG%20response.png)
 
 ### Persistent Conversation History
-![Conversation History](screenshots/conversation-history.png)
+![Conversation History](screenshots/Conversation%20history.png)
 
 ### Voice-Enabled Knowledge RAG
-![Voice Interface](screenshots/voice-interface.png)
+![Voice Interface](screenshots/Knowledge%20RAG%20and%20voice%20input.png)
