@@ -1,0 +1,32 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Environment files
+.env.*
+!.env.example
+
+# Local Qdrant database and uploaded documents
+data/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Python test files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Credentials
+*.pem
+*.key
+credentials.json
+token.json
+
+# Editor files
+.vscode/
+.idea/
